@@ -9,7 +9,7 @@ import {
     CardBlock,Row,Col,Card,
     CardTitle,CardText,CardImg,
     CardBody,CardSubtitle,Button,ButtonGroup,CardFooter,
-    FormGroup,Label,Input,Navbar,NavbarBrand
+    FormGroup,Label,Input,Navbar,NavbarBrand,Alert
 }
 from 'reactstrap';
 import Swal from 'sweetalert2'
@@ -19,11 +19,14 @@ import ReactLoading from 'react-loading';
 const MySwal = withReactContent(Swal);
 
 const LoadingBar = ({ type, color }) => (
-    <Col sm="12" md={{ size: 12, offset: 5 }} xs={{ size: 6, offset: 3 }}>
+    <Col sm="12" md={{ size: 12, offset: 5 }} xs={{ size: 6, offset: 4 }}>
         <ReactLoading type={"bars"} color={"#000"} height={150} width={100} />
     </Col>
     
 );
+
+//users for testing 
+const testUsernames = ["test_user_1","test_user_2","test_user_3"];
 
 
 class StupidPassApp extends React.Component {
@@ -32,12 +35,13 @@ class StupidPassApp extends React.Component {
         super(props);
         this.state = {
             view: 1,
-            show_alert:false
+            show_alert:false,
+            has_errors:false,
+            errors:[],
         }
     }
 
     changeViewState(view){
-        
         this.setState({
             view: 3
         });
@@ -52,42 +56,57 @@ class StupidPassApp extends React.Component {
 
     verifyIdentity(username){
         var text = username;
-        this.setState({
-            show_alert: true,
-        });
-        MySwal.fire({
-            input: 'text',
-            animation: false,
-            title: <b>Verifying Identity</b>,
-            text: "We sent a code to your phone. Please enter it now.",
-            width: 600,
-            padding: '3em',
-            showCancelButton: true,
-            showLoaderOnConfirm: true,
-            customClass: "alertStupid animated fadeInDown",
-            confirmButtonText:
-            'Verify Me!',
-            inputValidator: (value) => {
-                return !value && 'You need to write something!'
-            },
-            backdrop: `
-                rgba(0,0,123,0.4)
-                center left
-                no-repeat
-            `,
-            preConfirm: (textcode) => {
-                if(textcode === "test")
-                    return MySwal.fire({
-                        title: <b>Identity Verified!</b>,
-                        type: 'success',
-                        animation: false,
-                        customClass: 'animated fadeInUp',
-                        text: "Your identity has been verified!",
-                    });
-                else
-                    return MySwal.fire(<p>Failed</p>);    
-            }
-          })
+
+        if(!testUsernames.includes(username)){
+            let errors = this.state.errors;
+            errors.push(`We don't recognize ${username}`);
+
+            this.setState({
+                has_errors: true,
+                errors: errors
+            });
+        }
+        else{
+            this.setState({
+                show_alert: true,
+            });
+    
+            MySwal.fire({
+                input: 'text',
+                animation: false,
+                title: <b>Verifying Identity</b>,
+                text: "We sent a code to your phone. Please enter it now.",
+                width: 600,
+                padding: '3em',
+                showCancelButton: true,
+                showLoaderOnConfirm: true,
+                customClass: "alertStupid animated fadeInDown",
+                confirmButtonText:
+                'Verify Me!',
+                inputValidator: (value) => {
+                    return !value && 'You need to write something!'
+                },
+                backdrop: `
+                    rgba(0,0,123,0.4)
+                    center left
+                    no-repeat
+                `,
+                preConfirm: (textcode) => {
+                    if(textcode === "test")
+                        return MySwal.fire({
+                            title: <b>Identity Verified!</b>,
+                            type: 'success',
+                            animation: false,
+                            customClass: 'animated fadeInUp',
+                            text: "Your identity has been verified!",
+                        });
+                    else
+                        return MySwal.fire(<p>Failed</p>);    
+                }
+              })
+        }
+
+        
     }
 
     render(){
@@ -115,8 +134,9 @@ class StupidPassApp extends React.Component {
         }
 
         return (
-            <Container >
-                <Card className="mainInput animated fadeInDown">
+            <Container className="mainInput">
+                {this.state.has_errors === true ? <StupidAlert alert_text={this.state.errors.join("<br>")}/> : ""}
+                <Card className="animated fadeInDown">
                 {this.state.view != 1 && <StupidPassNav changeViewState={this.changeViewState.bind(this)}/>}
                 {this.state.view == 1 && <StupidPassHeader getViewState={this.getViewState.bind(this)}/>}
                     <CardBody>
@@ -134,6 +154,31 @@ class StupidPassApp extends React.Component {
     
     }
 }
+
+class StupidAlert extends React.Component {
+    constructor(props) {
+      super(props);
+  
+      this.state = {
+        visible: true,
+        alert_text: this.props.alert_text
+      };
+  
+      this.onDismiss = this.onDismiss.bind(this);
+    }
+  
+    onDismiss() {
+      this.setState({ visible: false });
+    }
+  
+    render() {
+      return (
+        <Alert color="danger" isOpen={this.state.visible} toggle={this.onDismiss}>
+            {this.state.alert_text}
+        </Alert>
+      );
+    }
+  }
 
 class StupidPassNav extends React.Component {
 

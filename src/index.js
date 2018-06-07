@@ -38,7 +38,11 @@ class StupidPassApp extends React.Component {
             show_alert:false,
             has_errors:false,
             errors:[],
-        }
+        } 
+
+        this.setErrorState = this.setErrorState.bind(this);
+        this.addErrorMessage = this.addErrorMessage.bind(this);
+        this.clearErrorMessages = this.clearErrorMessages.bind(this);
     }
 
     changeViewState(view){
@@ -54,17 +58,36 @@ class StupidPassApp extends React.Component {
         return this.state.view;
     }
 
+    setErrorState(error_state){
+        this.setState({
+            has_errors: error_state
+        });
+    }
+
+    addErrorMessage(error_message){
+        let errors = this.state.errors;
+        errors.push(error_message);
+        this.setState({
+            errors: errors
+        });
+    }
+
+    clearErrorMessages(){
+        this.setState({
+            errors:[]
+        })
+    }
+
     verifyIdentity(username){
         var text = username;
 
-        if(!testUsernames.includes(username)){
-            let errors = this.state.errors;
-            errors.push(`We don't recognize ${username}`);
-
-            this.setState({
-                has_errors: true,
-                errors: errors
-            });
+        if(username == "" || username == undefined){
+            this.addErrorMessage(`You must enter a username`);
+            this.setErrorState(true);
+        }
+        else if(!testUsernames.includes(username)){
+            this.addErrorMessage(`We don't recognize the username: ${username}`);
+            this.setErrorState(true);
         }
         else{
             this.setState({
@@ -135,7 +158,11 @@ class StupidPassApp extends React.Component {
 
         return (
             <Container className="mainInput">
-                {this.state.has_errors === true ? <StupidAlert alert_text={this.state.errors.join("<br>")}/> : ""}
+                {this.state.has_errors === true ? <StupidAlert 
+                    alert_text={this.state.errors.join(`\n`)}
+                    setErrorState={this.setErrorState.bind(this)}
+                    clearErrorMessages={this.clearErrorMessages.bind(this)}
+                    /> : ""}
                 <Card className="animated fadeInDown">
                 {this.state.view != 1 && <StupidPassNav changeViewState={this.changeViewState.bind(this)}/>}
                 {this.state.view == 1 && <StupidPassHeader getViewState={this.getViewState.bind(this)}/>}
@@ -169,6 +196,8 @@ class StupidAlert extends React.Component {
   
     onDismiss() {
       this.setState({ visible: false });
+      this.props.setErrorState(false);
+      this.props.clearErrorMessages();
     }
   
     render() {
